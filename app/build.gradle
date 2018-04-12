@@ -1,0 +1,64 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion '25.0.1'
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11"
+                abiFilters "arm64-v8a","armeabi-v7a","armeabi","mips","mips64","x86","x86_64"
+            }
+        }
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.0.0'
+    testCompile 'junit:junit:4.12'
+}
+
+def JAR_NAME = "jfeng-bspatch";//定义jar name
+def JAR_VERSION = "_v1.0";//定义jar version
+def JARDestinationPath = "build";//定义输出路径
+def zipJarFile = file('build/intermediates/bundles/default/classes.jar')//jar包来源
+
+task deleteBuild(type: Delete) {
+    //删除之前生成的jar包
+    delete JARDestinationPath + JAR_NAME + JAR_VERSION + ".jar"
+}
+
+task makeJar(type: Jar) {
+    from zipTree(zipJarFile)//jar包来源
+    from fileTree(dir: 'src/main',includes: ['assets/**'])//assets文件的内容打包到jar包里
+    baseName = JAR_NAME + JAR_VERSION//jar包输出名称
+    destinationDir = file(JARDestinationPath)//jar包输出路径
+}
+
+makeJar.dependsOn(deleteBuild, build)
+
